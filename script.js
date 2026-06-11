@@ -14,7 +14,92 @@ const INITIAL_SPEED = 1000;   // Tốc độ ban đầu: 1000ms (1 giây rơi 1 
 const MAX_SPEED_LIMIT = 150;  // Tốc độ nhanh nhất: 150ms (Nhanh nữa là không kịp nhìn!)
 const SCORE_MILESTONE = 500;  // Cứ mỗi 500 điểm sẽ lên một cấp độ mới
 const SPEED_DECREMENT = 80;   // Mỗi cấp độ mới sẽ giảm 80ms thời gian chờ của gạch
+let isTimeAttackMode = false;
+let timeRemaining = 0;
+let timerInterval = null;
+let currentAttackMinutes = 0;
+function formatTime(seconds) {
+    let m = Math.floor(seconds / 60);
+    let s = seconds % 60;
+    return (m < 10 ? "0" + m : m) + ":" + (s < 10 ? "0" + s : s);
+}
+function updateMenuState() {
+    const continueBtn = document.getElementById('continue-btn');
+    const classicBtnText = document.getElementById('classic-btn-text');
+    const timeAttackSection = document.getElementById('time-attack-section');
 
+    if (isGameStarted && !isGameOver) {
+        if (continueBtn) continueBtn.style.display = '';
+        if (classicBtnText) classicBtnText.innerText = "TRẬN ĐẤU MỚI";
+        if (timeAttackSection) timeAttackSection.style.display = 'none';
+    } else {
+        if (continueBtn) continueBtn.style.display = 'none';
+        if (classicBtnText) classicBtnText.innerText = "CHẾ ĐỘ CỔ ĐIỂN";
+        if (timeAttackSection) timeAttackSection.style.display = '';
+    }
+}
+function startTimeAttack(minutes) {
+    isTimeAttackMode = true;
+    currentAttackMinutes = minutes;
+    timeRemaining = minutes * 60;
+
+    document.getElementById('timer-display').classList.remove('hidden');
+    document.getElementById('time-left').innerText = formatTime(timeRemaining);
+
+    if (timerInterval) clearInterval(timerInterval);
+
+    timerInterval = setInterval(() => {
+        if (!isPaused && !isGameOver) {
+            timeRemaining--;
+            document.getElementById('time-left').innerText = formatTime(timeRemaining);
+
+            if (timeRemaining <= 0) {
+                clearInterval(timerInterval);
+                isGameOver = true;
+                const gameOverScoreElement = document.getElementById('gameover-score') || document.getElementById('final-score');
+                if (gameOverScoreElement && typeof player !== 'undefined') {
+                    gameOverScoreElement.innerText = player.score;
+                }
+                document.getElementById('game-over-screen').classList.remove('hidden');
+            }
+        }
+    }, 1000);
+}
+
+function stopTimer() {
+    if (timerInterval) clearInterval(timerInterval);
+    document.getElementById('timer-display').classList.add('hidden');
+    isTimeAttackMode = false;
+}
+[2, 3, 5, 10].forEach(mins => {
+    const btn = document.getElementById(`btn-time-${mins}`);
+    if (btn) {
+        btn.addEventListener('click', () => {
+            const startScreen = document.getElementById('start-screen');
+            if (startScreen) {
+                startScreen.classList.add('hidden');
+                startScreen.style.display = 'none';
+            }
+
+            isGameStarted = true;
+            isGameOver = false;
+            isPaused = false;
+            dropInterval = typeof INITIAL_SPEED !== 'undefined' ? INITIAL_SPEED : 1000;
+
+            if (typeof arena !== 'undefined') arena.forEach(row => row.fill(0));
+            if (typeof player !== 'undefined') {
+                player.score = 0;
+                playerReset();
+            }
+            updateScore();
+
+            startTimeAttack(mins);
+
+            lastTime = performance.now();
+            update();
+        });
+    }
+});
 // Biến dropInterval hiện tại của bạn, hãy gán mặc định bằng INITIAL_SPEED
 let dropInterval = INITIAL_SPEED;
 function calculateDifficulty() {
@@ -295,7 +380,7 @@ function updateScore() {
 
 document.addEventListener('keydown', event => {
     const startScreen = document.getElementById('start-screen');
-    if (startScreen && !startScreen.classList.contains('hidden')) {
+    if (startScreen && startScreen.style.display !== 'none' && !startScreen.classList.contains('hidden')) {
         return;
     }
     if (isGameOver) return;
@@ -345,6 +430,7 @@ let isGameStarted = false;
 
 playerReset();
 updateScore();
+updateMenuState();
 update();
 function showGameOver() {
     isGameOver = true;
@@ -368,31 +454,57 @@ document.getElementById('retry-btn').addEventListener('click', () => {
     update();
 });
 document.getElementById('play-classic-btn').addEventListener('click', () => {
-    document.getElementById('start-screen').classList.add('hidden');
-
-    if (!isGameStarted) {
-        isGameStarted = true;
+    if (isGameStarted && !isGameOver) {
+        isGameStarted = false;
         isGameOver = false;
         isPaused = false;
-
-        // RESET TỐC ĐỘ VỀ BAN ĐẦU KHI CHƠI VÁN MỚI
-        dropInterval = INITIAL_SPEED;
+        stopTimer();
 
         if (typeof arena !== 'undefined') arena.forEach(row => row.fill(0));
         if (typeof player !== 'undefined') {
             player.score = 0;
             playerReset();
         }
-        updateScore(); // Hàm này chạy sẽ tự gọi calculateDifficulty() để thiết lập lại
+        updateScore();
+
+        updateMenuState();
+    } else {
+        const startScreen = document.getElementById('start-screen');
+        if (startScreen) {
+            startScreen.classList.add('hidden');
+            startScreen.style.display = 'none';
+        }
+        stopTimer();
+
+        isGameStarted = true;
+        isGameOver = false;
+        isPaused = false;
+        dropInterval = typeof INITIAL_SPEED !== 'undefined' ? INITIAL_SPEED : 1000;
+
+        if (typeof arena !== 'undefined') arena.forEach(row => row.fill(0));
+        if (typeof player !== 'undefined') {
+            player.score = 0;
+            playerReset();
+        }
+        updateScore();
 
         lastTime = performance.now();
         update();
-    } else {
-        isPaused = true;
-        const pauseIcon = document.getElementById('pause-icon');
-        if (pauseIcon) pauseIcon.innerHTML = '<path fill="currentColor" d="M8 5v14l11-7z"/>';
-        draw();
     }
+});
+document.getElementById('continue-btn').addEventListener('click', () => {
+    document.getElementById('start-screen').classList.add('hidden');
+    isPaused = false; // Hủy trạng thái pause để game chạy tiếp
+
+    if (isTimeAttackMode) {
+        document.getElementById('timer-display').classList.remove('hidden');
+    }
+
+    const pauseIcon = document.getElementById('pause-icon');
+    if (pauseIcon) pauseIcon.innerHTML = '<path fill="currentColor" d="M6 19h4V5H6v14zm8-14v14h4V5h-4z"/>';
+
+    lastTime = performance.now();
+    update();
 });
 function togglePause() {
     if (isGameOver) return;
@@ -411,18 +523,16 @@ document.getElementById('pause-btn').addEventListener('click', () => {
     document.getElementById('pause-btn').blur();
 });
 document.getElementById('home-btn').addEventListener('click', () => {
-    // Chỉ hoạt động khi game đang trong trận và chưa bị Game Over
-    if (isGameStarted && !isGameOver) {
-        isPaused = true; // Đóng băng không cho gạch rơi tiếp
+    if (!isGameStarted || isGameOver) return;
+    isPaused = true;
 
-        // Thay đổi chữ ở nút ngoài sảnh chờ để người chơi biết là bấm vào sẽ chơi tiếp
-        document.getElementById('play-classic-btn').innerText = "TIẾP TỤC TRẬN ĐẤU";
-
-        // Hiện màn hình sảnh chờ lên
-        document.getElementById('start-screen').classList.remove('hidden');
-
-        document.getElementById('home-btn').blur(); // Bỏ focus nút để tránh lỗi nhấn Spacebar
+    const startScreen = document.getElementById('start-screen');
+    if (startScreen) {
+        startScreen.classList.remove('hidden');
+        startScreen.style.display = '';
     }
+
+    updateMenuState();
 });
 document.getElementById('game-replay-btn').addEventListener('click', () => {
     // 1. Reset các trạng thái vận hành của game
@@ -456,6 +566,11 @@ document.getElementById('game-replay-btn').addEventListener('click', () => {
 
     // 6. Cập nhật lại điểm số hiển thị trên giao diện màn hình
     if (typeof updateScore === 'function') updateScore();
+    if (isTimeAttackMode) {
+        startTimeAttack(currentAttackMinutes);
+    } else {
+        stopTimer();
+    }
 
     // 7. Ép hệ thống vẽ lại bàn cờ trống ngay lập tức
     if (typeof draw === 'function') draw();
@@ -463,45 +578,46 @@ document.getElementById('game-replay-btn').addEventListener('click', () => {
     // 8. Mẹo nhỏ: Bỏ focus nút bấm để tránh việc người chơi nhấn Spacebar bị kích hoạt lại nút Replay
     document.getElementById('game-replay-btn').blur();
 });
+// XÓA ĐOẠN NÀY ĐI ĐỂ TRÁNH XUNG ĐỘT
 document.getElementById('gameover-lobby-btn').addEventListener('click', () => {
     isGameStarted = false;
     isGameOver = false;
-
-    // RESET TỐC ĐỘ VỀ MẶC ĐỊNH
     dropInterval = INITIAL_SPEED;
-
+    stopTimer();
     document.getElementById('play-classic-btn').innerText = "CHẾ ĐỘ CỔ ĐIỂN";
     document.getElementById('game-over-screen').classList.add('hidden');
     document.getElementById('start-screen').classList.remove('hidden');
 });
 function backToLobby() {
-    // 1. Đặt lại trạng thái hệ thống - THÊM dòng reset isGameOver ở đây
     isGameStarted = false;
     isPaused = false;
-    isGameOver = false; // <-- THÊM DÒNG NÀY ĐỂ XÓA TRẠNG THÁI THUA CỦA VÁN TRƯỚC
+    isGameOver = false;
+    dropInterval = INITIAL_SPEED;
+    stopTimer();
 
-    // 2. Trả nút Pause góc màn hình về lại icon ban đầu
     const pauseIcon = document.getElementById('pause-icon');
     if (pauseIcon) {
         pauseIcon.innerHTML = '<path fill="currentColor" d="M6 19h4V5H6v14zm8-14v14h4V5h-4z"/>';
     }
 
-    // 3. Ẩn màn hình Game Over
     const gameOverScreen = document.getElementById('game-over-screen');
     if (gameOverScreen) {
         gameOverScreen.classList.add('hidden');
     }
 
-    // 4. Reset sạch sẽ dữ liệu bàn cờ cũ và điểm số
     if (typeof arena !== 'undefined') arena.forEach(row => row.fill(0));
     if (typeof player !== 'undefined') {
         player.score = 0;
-        // Nếu code của bạn dùng tên biến khác như score = 0 thì sửa cho đúng nhé
     }
     updateScore();
 
-    // 5. Hiện lại màn hình chờ sảnh chính
-    document.getElementById('start-screen').classList.remove('hidden');
+    const startScreen = document.getElementById('start-screen');
+    if (startScreen) {
+        startScreen.classList.remove('hidden');
+        startScreen.style.display = '';
+    }
+
+    updateMenuState();
 }
 
 // KÍCH HOẠT SỰ KIỆN KHI BẤM NÚT VỀ SẢNH TRÊN MÀN HÌNH GAME OVER
