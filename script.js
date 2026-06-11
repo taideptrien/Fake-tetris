@@ -424,6 +424,45 @@ document.getElementById('home-btn').addEventListener('click', () => {
         document.getElementById('home-btn').blur(); // Bỏ focus nút để tránh lỗi nhấn Spacebar
     }
 });
+document.getElementById('game-replay-btn').addEventListener('click', () => {
+    // 1. Reset các trạng thái vận hành của game
+    isGameStarted = true;
+    isGameOver = false;
+    isPaused = false;
+
+    // 2. Reset tốc độ rơi về mức ban đầu (tránh việc giữ nguyên tốc độ nhanh của ván trước)
+    if (typeof INITIAL_SPEED !== 'undefined') {
+        dropInterval = INITIAL_SPEED;
+    } else {
+        dropInterval = 1000; // Phòng hờ nếu bạn đặt tên biến khác
+    }
+
+    // 3. Trả nút Pause về lại icon 2 vạch dọc (Trạng thái đang chơi)
+    const pauseIcon = document.getElementById('pause-icon');
+    if (pauseIcon) {
+        pauseIcon.innerHTML = '<path fill="currentColor" d="M6 19h4V5H6v14zm8-14v14h4V5h-4z"/>';
+    }
+
+    // 4. Dọn sạch bong bàn cờ cũ
+    if (typeof arena !== 'undefined') {
+        arena.forEach(row => row.fill(0));
+    }
+
+    // 5. Khởi tạo lại thông số người chơi và tạo cục gạch mới
+    if (typeof player !== 'undefined') {
+        player.score = 0;
+        if (typeof playerReset === 'function') playerReset();
+    }
+
+    // 6. Cập nhật lại điểm số hiển thị trên giao diện màn hình
+    if (typeof updateScore === 'function') updateScore();
+
+    // 7. Ép hệ thống vẽ lại bàn cờ trống ngay lập tức
+    if (typeof draw === 'function') draw();
+
+    // 8. Mẹo nhỏ: Bỏ focus nút bấm để tránh việc người chơi nhấn Spacebar bị kích hoạt lại nút Replay
+    document.getElementById('game-replay-btn').blur();
+});
 document.getElementById('gameover-lobby-btn').addEventListener('click', () => {
     isGameStarted = false;
     isGameOver = false;
