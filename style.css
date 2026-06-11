@@ -28,6 +28,7 @@ body::before {
     background: rgba(0, 0, 0, 0.4);
     z-index: -1;
 }
+
 /* NỀN MÀN HÌNH CHỜ: Kết hợp màu tối deep blue và lưới Cyber Grid chuyển động */
 #start-screen {
     position: fixed;
@@ -242,6 +243,7 @@ body::before {
     color: #4a4a6a;
     cursor: not-allowed;
 }
+
 .game-wrapper {
     display: flex;
     gap: 15px;
@@ -313,6 +315,7 @@ canvas {
 .controls b {
     color: #fff;
 }
+
 .combo-text {
     height: 30px;
     font-size: 1.5rem;
@@ -382,6 +385,7 @@ canvas {
     background: #3498db;
     transform: scale(1.05);
 }
+
 /* Căn chỉnh cụm nút Game Over nằm hàng ngang */
 .game-actions {
     display: flex;
@@ -415,6 +419,7 @@ canvas {
 #gameover-lobby-btn:active {
     transform: translateY(0);
 }
+
 /* Khung chứa ngoài cùng - đảm bảo xếp hàng ngang và thẳng hàng */
 .control-cluster {
     position: absolute;
@@ -468,4 +473,103 @@ canvas {
 /* Hiệu ứng khi ấn nút (Active) */
 .control-btn:active {
     transform: translateY(0);
+}
+#timer-display {
+    position: absolute;
+    top: 20px;
+    right: 20px;
+    font-size: 28px;
+    font-weight: bold;
+    color: #ffffff;
+    background: rgba(40, 35, 45, 0.8);
+    padding: 10px 20px;
+    border-radius: 10px;
+    border: 2px solid #ff4757;
+    z-index: 100;
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+}
+
+#time-attack-menu {
+    display: flex;
+    gap: 10px;
+    margin-top: 15px;
+    justify-content: center;
+}
+/* Khung bọc khu vực chọn thời gian */
+.time-attack-section {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    margin-top: 10px;
+    width: 100%;
+}
+
+/* Chữ tiêu đề phụ nhỏ */
+.mode-label {
+    color: rgba(255, 255, 255, 0.6);
+    font-size: 12px;
+    letter-spacing: 2px;
+    font-weight: bold;
+}
+
+/* Hàng chứa 4 nút thời gian */
+#time-attack-menu {
+    display: flex;
+    gap: 8px;
+    width: 100%;
+}
+
+/* Giao diện cho từng nút chọn phút */
+.time-btn {
+    flex: 1;
+    padding: 12px 0;
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 8px;
+    color: #fff;
+    font-size: 12px;
+    font-weight: bold;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+/* Hiệu ứng khi di chuột vào nút phút */
+.time-btn:hover {
+    background: #ff4757;
+    /* Màu đỏ kịch tính hợp với Time Attack */
+    border-color: #ff4757;
+    box-shadow: 0 0 10px rgba(255, 71, 87, 0.5);
+    transform: translateY(-2px);
+}
+
+.time-btn:active {
+    transform: translateY(0);
+}
+/* Khung hiển thị đồng hồ ở góc trên bên phải */
+#timer-display {
+    position: absolute;
+    top: 20px;
+    right: 20px;
+    font-size: 24px;
+    font-weight: bold;
+    font-family: monospace;
+    /* Chữ font dạng số để các số không bị giật lag khi nhảy */
+    color: #ffffff;
+    background: rgba(40, 35, 45, 0.6);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    padding: 8px 18px;
+    border-radius: 12px;
+    border: 1px solid rgba(255, 71, 87, 0.4);
+    /* Viền đỏ mờ kịch tính */
+    box-shadow: 0 4px 15px rgba(255, 71, 87, 0.15);
+    z-index: 100;
+    letter-spacing: 1px;
+    transition: all 0.3s ease;
+}
+
+/* Ẩn đồng hồ khi chơi chế độ Cổ điển */
+#timer-display.hidden {
+    display: none;
 }
